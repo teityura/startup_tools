@@ -6,8 +6,40 @@ HOST_NAME='hoge-host' # ~/.ssh/configに登録したいホスト名
 SEC_NAME="${HOST_NAME}-rsa"
 HOST_IP='0.0.0.0' # 接続先IP
 PORT=50010 # お好きなポート
-USER_NAME='cloud'
-SEP=$(for i in $(seq 1 $(tput cols)) ; do echo -n '#' ; done ; echo ;)
+USER_NAME='root'
+SKIP=0 # 対話モードでの引数入力フラグ
+SEP=$(for i in $(seq 1 $(tput cols)) ; do echo -n '#' ; done ; echo ;) # 整形表示用の文字列
+
+
+# ==============================================================================
+# オプション解析
+# ==============================================================================
+if [ $# -ge 1 ]; then
+    while getopts c:d:ih OPT
+    do
+        case "$OPT" in
+            h)  HOST_NAME=$OPTARG ;;
+            u)  USER_NAME=$OPTARG ;;
+            i)  HOST_IP=$OPTARG ;;
+            p)  PORT=$OPTARG ;;
+            h)  echo 1>&2 'Usage:  starup.sh -h <hostname> -u <user> -i <ip> --p <port>' ;;
+            \?) usage_exit ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+# ==============================================================================
+# 対話式での引数入力
+# ==============================================================================
+else
+    for i in $(echo 'HOST_NAME USER_NAME HOST_IP PORT')
+    do
+        echo -n "$i(default=${!i}) : "
+        read input && input=$(echo $input)
+        if [ -n "$input" ]; then eval ${i}=$input; fi
+    done
+    echo startup.sh -h $HOST_NAME -u $USER_NAME -i $HOST_IP -p $PORT
+fi
+SEC_NAME="${HOST_NAME}-rsa"
 
 
 # ==============================================================================
